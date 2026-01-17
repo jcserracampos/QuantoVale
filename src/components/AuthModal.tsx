@@ -174,7 +174,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }: Props) {
           {/* Privacy note */}
           <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-slate-600">
             <Shield className="w-3 h-3" />
-            <span>Dados privados via PocketBase. Sem trackers.</span>
+            <span>Dados privados e seguros. Sem trackers.</span>
           </div>
         </div>
       </div>

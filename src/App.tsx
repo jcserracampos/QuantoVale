@@ -224,31 +224,9 @@ function App() {
 
           {/* Footer */}
           <footer className="mt-16 pt-8 border-t border-white/[0.06]">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-              <p>
-                Calculadora de Valuation para Startups e SaaS brasileiras.
-                <span className="hidden md:inline"> • </span>
-                <br className="md:hidden" />
-                <span className="text-slate-600">Privacidade garantida, sem trackers.</span>
-              </p>
-              <div className="flex items-center gap-6">
-                <a
-                  href="https://github.com/harshith-eth/SaaSValuationCalculator"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-slate-300 transition-colors"
-                >
-                  GitHub
-                </a>
-                <a
-                  href="https://portaldovaluation.com.br/valuation/multiplo-de-ebitda-por-setor/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-slate-300 transition-colors"
-                >
-                  Portal do Valuation
-                </a>
-              </div>
+            <div className="text-center text-sm text-slate-500">
+              <p>Calculadora de Valuation para Startups e SaaS brasileiras.</p>
+              <p className="text-slate-600 mt-1">Privacidade garantida, sem trackers.</p>
             </div>
           </footer>
         </main>
