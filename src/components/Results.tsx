@@ -21,7 +21,7 @@ import {
   ChevronUp,
   Sparkles,
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import type { ValuationResult, Estagio } from '@/types/valuation';
 import { formatarBRL, formatarUSD, formatarNumeroGrande, formatarUSDGrande } from '@/utils/formulas';
 
@@ -293,9 +293,8 @@ export function Results({
           </thead>
           <tbody>
             {results.map((result) => (
-              <>
+              <React.Fragment key={result.metodo}>
                 <tr
-                  key={result.metodo}
                   className={`border-b border-white/[0.04] ${
                     !result.aplicavel
                       ? 'opacity-30'
@@ -338,9 +337,9 @@ export function Results({
                   </td>
                 </tr>
                 {result.aplicavel && result.assuncoes && result.assuncoes.length > 0 && (
-                  <AssuncoesRow key={`${result.metodo}-assuncoes`} assuncoes={result.assuncoes} />
+                  <AssuncoesRow assuncoes={result.assuncoes} />
                 )}
-              </>
+              </React.Fragment>
             ))}
           </tbody>
         </table>
