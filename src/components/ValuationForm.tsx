@@ -113,11 +113,11 @@ function Input({
   step?: number;
 }) {
   return (
-    <div className="space-y-2">
-      <label className="block text-sm text-slate-400">{label}</label>
+    <div>
+      <label className="block text-sm text-slate-400 mb-2">{label}</label>
       <div className="relative">
         {prefix && (
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none">
             {prefix}
           </span>
         )}
@@ -167,8 +167,8 @@ function Select({
   helpText?: string;
 }) {
   return (
-    <div className="space-y-2">
-      <label className="block text-sm text-slate-400">{label}</label>
+    <div>
+      <label className="block text-sm text-slate-400 mb-2">{label}</label>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
