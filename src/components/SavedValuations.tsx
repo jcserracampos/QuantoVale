@@ -1,8 +1,6 @@
-// Componente para listar e carregar análises salvas
-// Mostra histórico do usuário logado
-
+// Componente de Análises Salvas - Premium Design
 import { useState } from 'react';
-import { History, Loader2, ChevronDown, ChevronUp, Trash2, FileInput } from 'lucide-react';
+import { History, Loader2, ChevronDown, Trash2, FileInput } from 'lucide-react';
 import type { PocketBaseValuation } from '@/types/valuation';
 import { formatarNumeroGrande } from '@/utils/formulas';
 import { deletarValuation } from '@/utils/pocketbase';
@@ -36,41 +34,37 @@ export function SavedValuations({ savedValuations, isLoading, onLoad, onRefresh 
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header colapsável */}
+    <div className="glass-card overflow-hidden">
+      {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <History className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-          <span className="font-medium text-gray-900 dark:text-white">
-            Análises Salvas
-          </span>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            ({savedValuations.length})
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center">
+            <History className="w-4 h-4 text-primary-400" />
+          </div>
+          <span className="font-medium text-slate-200">Análises Salvas</span>
+          <span className="text-xs text-slate-500">({savedValuations.length})</span>
         </div>
         <div className="flex items-center gap-2">
-          {isLoading && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
-          {isOpen ? (
-            <ChevronUp className="w-5 h-5 text-gray-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-gray-400" />
-          )}
+          {isLoading && <Loader2 className="w-4 h-4 animate-spin text-slate-500" />}
+          <ChevronDown
+            className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          />
         </div>
       </button>
 
-      {/* Lista de análises */}
+      {/* List */}
       {isOpen && (
-        <div className="border-t border-gray-200 dark:border-gray-700 max-h-64 overflow-y-auto">
+        <div className="border-t border-white/[0.06] max-h-64 overflow-y-auto">
           {isLoading ? (
-            <div className="p-4 text-center text-gray-500">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
-              Carregando...
+            <div className="p-6 text-center">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto text-slate-500 mb-2" />
+              <p className="text-sm text-slate-500">Carregando...</p>
             </div>
           ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+            <ul className="divide-y divide-white/[0.04]">
               {savedValuations.map((valuation) => {
                 const inputs = typeof valuation.inputs === 'string'
                   ? JSON.parse(valuation.inputs)
@@ -88,26 +82,26 @@ export function SavedValuations({ savedValuations, isLoading, onLoad, onRefresh 
                 return (
                   <li
                     key={valuation.id}
-                    className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+                    className="p-4 hover:bg-white/[0.02] cursor-pointer transition-colors"
                     onClick={() => onLoad(valuation)}
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                        <p className="font-medium text-slate-200 truncate">
                           {inputs.basic?.name || 'Sem nome'}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-400 border border-primary-500/20">
                             {inputs.basic?.estagio || 'N/A'}
                           </span>
-                          <span>{inputs.basic?.setor}</span>
+                          <span className="text-xs text-slate-500">{inputs.basic?.setor}</span>
                           {valuation.valorPonderado && (
-                            <span className="font-medium text-primary-600 dark:text-primary-400">
+                            <span className="text-xs font-medium text-primary-400 tabular-nums">
                               {formatarNumeroGrande(valuation.valorPonderado)}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-400 mt-1">{created}</p>
+                        <p className="text-[10px] text-slate-600 mt-1">{created}</p>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
@@ -115,7 +109,7 @@ export function SavedValuations({ savedValuations, isLoading, onLoad, onRefresh 
                             e.stopPropagation();
                             onLoad(valuation);
                           }}
-                          className="p-1.5 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                          className="p-2 rounded-lg text-slate-500 hover:text-primary-400 hover:bg-white/[0.05] transition-colors"
                           title="Carregar análise"
                         >
                           <FileInput className="w-4 h-4" />
@@ -123,7 +117,7 @@ export function SavedValuations({ savedValuations, isLoading, onLoad, onRefresh 
                         <button
                           onClick={(e) => handleDelete(valuation.id!, e)}
                           disabled={deletingId === valuation.id}
-                          className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                          className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-white/[0.05] transition-colors disabled:opacity-50"
                           title="Excluir análise"
                         >
                           {deletingId === valuation.id ? (

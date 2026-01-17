@@ -1,5 +1,5 @@
-// Componente de Resultados: Tabela + Gráfico
-// Suporte a métodos dinâmicos por estágio com ponderação
+// Componente de Resultados Premium - The Hero Section
+// Design fintech moderno com valores em destaque
 
 import {
   BarChart,
@@ -17,9 +17,9 @@ import {
   MinusCircle,
   FileJson,
   FileSpreadsheet,
-  Info,
   ChevronDown,
   ChevronUp,
+  Sparkles,
 } from 'lucide-react';
 import { useState } from 'react';
 import type { ValuationResult, Estagio } from '@/types/valuation';
@@ -40,65 +40,60 @@ interface Props {
   onExportCSV: () => void;
 }
 
-// Cores para cada método
+// Cores para cada método (emerald-based)
 const CORES: Record<string, string> = {
-  'Múltiplos ARR': '#3b82f6',    // blue-500
-  'Múltiplos EBITDA': '#10b981', // emerald-500
-  'DCF': '#8b5cf6',              // violet-500
-  'Berkus': '#f59e0b',           // amber-500
-  'Scorecard': '#ec4899',        // pink-500
-  'Patrimônio Líquido': '#6366f1', // indigo-500
+  'Múltiplos ARR': '#34d399',
+  'Múltiplos EBITDA': '#10b981',
+  'DCF': '#6ee7b7',
+  'Berkus': '#059669',
+  'Scorecard': '#047857',
+  'Patrimônio Líquido': '#065f46',
 };
 
-// Ícone de confiança
 function ConfiancaIcon({ nivel }: { nivel: 'Alta' | 'Média' | 'Baixa' }) {
   switch (nivel) {
     case 'Alta':
-      return <CheckCircle className="w-4 h-4 text-green-500" />;
+      return <CheckCircle className="w-4 h-4 text-primary-400" />;
     case 'Média':
-      return <MinusCircle className="w-4 h-4 text-yellow-500" />;
+      return <MinusCircle className="w-4 h-4 text-amber-400" />;
     case 'Baixa':
-      return <AlertCircle className="w-4 h-4 text-red-500" />;
+      return <AlertCircle className="w-4 h-4 text-red-400" />;
   }
 }
 
-// Card de resumo
-function SummaryCard({
-  title,
+// Card de métrica
+function MetricCard({
+  label,
   value,
-  subtitle,
+  subvalue,
   highlight = false,
   variant = 'default',
 }: {
-  title: string;
+  label: string;
   value: string;
-  subtitle?: string;
+  subvalue?: string;
   highlight?: boolean;
-  variant?: 'default' | 'success' | 'warning';
+  variant?: 'default' | 'success';
 }) {
-  const bgClasses = {
-    default: highlight
-      ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500'
-      : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700',
-    success: 'bg-green-50 dark:bg-green-900/20 border border-green-300 dark:border-green-700',
-    warning: 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700',
-  };
-
-  const textClasses = {
-    default: highlight ? 'text-primary-600 dark:text-primary-400' : 'text-gray-900 dark:text-white',
-    success: 'text-green-700 dark:text-green-400',
-    warning: 'text-yellow-700 dark:text-yellow-400',
-  };
-
   return (
-    <div className={`p-4 rounded-lg ${bgClasses[variant]}`}>
-      <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
-      <p className={`text-2xl font-bold ${textClasses[variant]}`}>
+    <div
+      className={`p-4 rounded-xl ${
+        highlight
+          ? 'bg-gradient-to-br from-primary-500/20 to-primary-600/10 border border-primary-500/30'
+          : variant === 'success'
+          ? 'bg-emerald-500/10 border border-emerald-500/20'
+          : 'bg-white/[0.03] border border-white/[0.06]'
+      }`}
+    >
+      <p className="text-sm text-slate-400 mb-1">{label}</p>
+      <p
+        className={`text-xl font-bold tabular-nums ${
+          highlight ? 'text-primary-400' : variant === 'success' ? 'text-emerald-400' : 'text-white'
+        }`}
+      >
         {value}
       </p>
-      {subtitle && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{subtitle}</p>
-      )}
+      {subvalue && <p className="text-xs text-slate-500 mt-1">{subvalue}</p>}
     </div>
   );
 }
@@ -110,20 +105,20 @@ function AssuncoesRow({ assuncoes }: { assuncoes?: string[] }) {
   if (!assuncoes || assuncoes.length === 0) return null;
 
   return (
-    <tr className="bg-gray-50 dark:bg-gray-800/50">
-      <td colSpan={6} className="px-4 py-2">
+    <tr className="bg-white/[0.02]">
+      <td colSpan={5} className="px-4 py-2">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
         >
           {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           <span>{isOpen ? 'Ocultar' : 'Ver'} premissas ({assuncoes.length})</span>
         </button>
         {isOpen && (
-          <ul className="mt-2 ml-4 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+          <ul className="mt-2 ml-4 text-xs text-slate-500 space-y-1">
             {assuncoes.map((a, i) => (
               <li key={i} className="flex items-start gap-1">
-                <span className="text-gray-400">•</span>
+                <span className="text-slate-600">•</span>
                 {a}
               </li>
             ))}
@@ -148,7 +143,7 @@ export function Results({
   onExportJSON,
   onExportCSV,
 }: Props) {
-  // Dados para o gráfico (apenas métodos aplicáveis)
+  // Dados para o gráfico
   const chartData = results
     .filter((r) => r.aplicavel && r.valorBRL > 0)
     .map((r) => ({
@@ -158,133 +153,123 @@ export function Results({
       peso: r.peso,
     }));
 
-  // Tooltip customizado
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-          <p className="font-medium text-gray-900 dark:text-white">{data.metodo}</p>
-          <p className="text-primary-600 dark:text-primary-400">
-            R$ {data.valor.toFixed(2)}M
-          </p>
-          <p className="text-xs text-gray-500">
-            Peso: {(data.peso * 100).toFixed(0)}%
-          </p>
+        <div className="bg-slate-800 p-3 rounded-lg shadow-xl border border-white/10">
+          <p className="font-medium text-white">{data.metodo}</p>
+          <p className="text-primary-400 tabular-nums">R$ {data.valor.toFixed(2)}M</p>
+          <p className="text-xs text-slate-400">Peso: {(data.peso * 100).toFixed(0)}%</p>
         </div>
       );
     }
     return null;
   };
 
-  // Contagem de métodos aplicáveis
-  const metodosAplicaveis = results.filter(r => r.aplicavel).length;
-  const metodosComValor = results.filter(r => r.aplicavel && r.valorBRL > 0).length;
+  const metodosAplicaveis = results.filter((r) => r.aplicavel).length;
+  const metodosComValor = results.filter((r) => r.aplicavel && r.valorBRL > 0).length;
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Resultado da Análise
-          </h2>
-          {isCalculating && (
-            <span className="text-sm text-gray-500 animate-pulse">Calculando...</span>
-          )}
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-primary-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-white tracking-tight">Resultado da Análise</h2>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-400 border border-primary-500/20">
+                {estagio}
+              </span>
+              <span className="text-xs text-slate-500">
+                {metodosComValor}/{metodosAplicaveis} métodos
+              </span>
+              {isCalculating && (
+                <span className="text-xs text-slate-500 animate-pulse">Calculando...</span>
+              )}
+            </div>
+          </div>
         </div>
-        {/* Botões de exportação */}
+
+        {/* Export buttons */}
         <div className="flex gap-2">
-          <button
-            onClick={onExportJSON}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Exportar JSON"
-          >
+          <button onClick={onExportJSON} className="btn-secondary flex items-center gap-1.5 text-sm">
             <FileJson className="w-4 h-4" />
             <span className="hidden sm:inline">JSON</span>
           </button>
-          <button
-            onClick={onExportCSV}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Exportar CSV"
-          >
+          <button onClick={onExportCSV} className="btn-secondary flex items-center gap-1.5 text-sm">
             <FileSpreadsheet className="w-4 h-4" />
             <span className="hidden sm:inline">CSV</span>
           </button>
         </div>
       </div>
 
-      {/* Badge do estágio */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-600 dark:text-gray-400">Estágio:</span>
-        <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-sm font-medium">
-          {estagio}
-        </span>
-        <span className="text-sm text-gray-500">
-          ({metodosComValor} de {metodosAplicaveis} métodos aplicáveis)
-        </span>
+      {/* Hero Value */}
+      <div className="text-center py-8 px-4 rounded-2xl bg-gradient-to-br from-primary-500/10 via-transparent to-emerald-500/5 border border-primary-500/20">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Sparkles className="w-5 h-5 text-primary-400" />
+          <p className="text-sm text-slate-400 uppercase tracking-wider font-medium">
+            Valuation Ponderado
+          </p>
+        </div>
+        <p className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white tabular-nums glow-text">
+          {formatarNumeroGrande(valorPonderado)}
+        </p>
+        <p className="text-lg text-slate-400 mt-2 tabular-nums">
+          {formatarUSDGrande(valorPonderado / 5.15)}
+        </p>
       </div>
 
-      {/* Cards de Resumo */}
+      {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard
-          title="Valuation Ponderado"
-          value={formatarNumeroGrande(valorPonderado)}
-          subtitle={formatarUSDGrande(valorPonderado / 5.15)}
-          highlight
-        />
         {investimento > 0 && (
-          <SummaryCard
-            title="Post-Money"
+          <MetricCard
+            label="Post-Money"
             value={formatarNumeroGrande(postMoney)}
-            subtitle={`+ R$ ${(investimento / 1e6).toFixed(2)}M investimento`}
+            subvalue={`+ R$ ${(investimento / 1e6).toFixed(1)}M`}
             variant="success"
           />
         )}
-        <SummaryCard
-          title="Range"
+        <MetricCard
+          label="Range"
           value={`${formatarNumeroGrande(range.min)} - ${formatarNumeroGrande(range.max)}`}
         />
-        <SummaryCard
-          title="Média Simples"
+        <MetricCard
+          label="Média Simples"
           value={formatarNumeroGrande(valorMedio)}
-          subtitle={`Mediana: ${formatarNumeroGrande(valorMediano)}`}
+          subvalue={`Mediana: ${formatarNumeroGrande(valorMediano)}`}
         />
+        <MetricCard label="Recomendação" value={metodologiaRecomendada} />
       </div>
 
-      {/* Recomendação */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-        <div className="flex items-start gap-2">
-          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-              Metodologia Recomendada para {estagio}:
-            </p>
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              {metodologiaRecomendada}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Gráfico de Barras */}
+      {/* Chart */}
       {chartData.length > 0 && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
-            Comparativo de Metodologias (em milhões R$)
+        <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+          <h3 className="text-sm font-medium text-slate-400 mb-4">
+            Comparativo de Metodologias
           </h3>
-          <ResponsiveContainer width="100%" height={Math.max(200, chartData.length * 50)}>
-            <BarChart data={chartData} layout="vertical">
-              <XAxis type="number" tickFormatter={(v) => `${v}M`} />
+          <ResponsiveContainer width="100%" height={Math.max(180, chartData.length * 45)}>
+            <BarChart data={chartData} layout="vertical" margin={{ left: 0, right: 20 }}>
+              <XAxis
+                type="number"
+                tickFormatter={(v) => `${v}M`}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748b', fontSize: 11 }}
+              />
               <YAxis
                 type="category"
                 dataKey="metodo"
-                width={90}
-                tick={{ fontSize: 11 }}
+                width={80}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
               />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+              <Bar dataKey="valor" radius={[0, 6, 6, 0]} barSize={24}>
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.fill} />
                 ))}
@@ -294,29 +279,16 @@ export function Results({
         </div>
       )}
 
-      {/* Tabela Detalhada */}
-      <div className="overflow-x-auto">
+      {/* Detailed Table */}
+      <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-gray-700">
-              <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                Método
-              </th>
-              <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                Valor (BRL)
-              </th>
-              <th className="text-right py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                Valor (USD)
-              </th>
-              <th className="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                Peso
-              </th>
-              <th className="text-center py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                Confiança
-              </th>
-              <th className="text-left py-3 px-4 font-medium text-gray-700 dark:text-gray-300">
-                Detalhes
-              </th>
+            <tr className="border-b border-white/[0.06] bg-white/[0.02]">
+              <th className="text-left py-3 px-4 font-medium text-slate-400">Método</th>
+              <th className="text-right py-3 px-4 font-medium text-slate-400">BRL</th>
+              <th className="text-right py-3 px-4 font-medium text-slate-400">USD</th>
+              <th className="text-center py-3 px-4 font-medium text-slate-400">Peso</th>
+              <th className="text-center py-3 px-4 font-medium text-slate-400">Conf.</th>
             </tr>
           </thead>
           <tbody>
@@ -324,55 +296,45 @@ export function Results({
               <>
                 <tr
                   key={result.metodo}
-                  className={`border-b border-gray-100 dark:border-gray-800 ${
+                  className={`border-b border-white/[0.04] ${
                     !result.aplicavel
-                      ? 'opacity-40 bg-gray-50 dark:bg-gray-900'
+                      ? 'opacity-30'
                       : result.valorBRL > 0
-                      ? 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
-                      : 'opacity-60'
+                      ? 'hover:bg-white/[0.02]'
+                      : 'opacity-50'
                   }`}
                 >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
                       <div
-                        className="w-3 h-3 rounded-full flex-shrink-0"
-                        style={{
-                          backgroundColor: result.aplicavel ? CORES[result.metodo] : '#9ca3af',
-                        }}
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: result.aplicavel ? CORES[result.metodo] : '#475569' }}
                       />
-                      <div>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {result.metodo}
-                        </span>
-                        {!result.aplicavel && (
-                          <span className="ml-2 text-xs text-gray-500">(N/A)</span>
-                        )}
-                      </div>
+                      <span className="font-medium text-slate-200">{result.metodo}</span>
+                      {!result.aplicavel && (
+                        <span className="text-[10px] text-slate-600 uppercase">N/A</span>
+                      )}
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-right font-mono text-gray-900 dark:text-white">
+                  <td className="py-3 px-4 text-right font-mono text-slate-300 tabular-nums">
                     {result.valorBRL > 0 ? formatarBRL(result.valorBRL) : '-'}
                   </td>
-                  <td className="py-3 px-4 text-right font-mono text-gray-600 dark:text-gray-400">
+                  <td className="py-3 px-4 text-right font-mono text-slate-500 tabular-nums">
                     {result.valorUSD > 0 ? formatarUSD(result.valorUSD) : '-'}
                   </td>
                   <td className="py-3 px-4 text-center">
                     {result.aplicavel && result.peso > 0 ? (
-                      <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-medium">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400">
                         {(result.peso * 100).toFixed(0)}%
                       </span>
-                    ) : '-'}
+                    ) : (
+                      '-'
+                    )}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-center gap-1">
                       <ConfiancaIcon nivel={result.confianca} />
-                      <span className="text-gray-600 dark:text-gray-400 text-xs">
-                        {result.confianca}
-                      </span>
                     </div>
-                  </td>
-                  <td className="py-3 px-4 text-gray-500 dark:text-gray-400 text-xs max-w-xs truncate">
-                    {result.detalhes}
                   </td>
                 </tr>
                 {result.aplicavel && result.assuncoes && result.assuncoes.length > 0 && (
@@ -385,10 +347,11 @@ export function Results({
       </div>
 
       {/* Disclaimer */}
-      <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-        <p className="text-xs text-red-700 dark:text-red-300">
-          <strong>Aviso:</strong> Valores estimados para fins de referência. Esta análise não constitui
-          assessoria financeira ou garantia de valor real. Consulte profissionais qualificados para avaliação formal.
+      <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20">
+        <p className="text-xs text-red-400/80">
+          <strong className="text-red-400">Aviso:</strong> Valores estimados para fins de referência.
+          Esta análise não constitui assessoria financeira ou garantia de valor real. Consulte
+          profissionais qualificados para avaliação formal.
         </p>
       </div>
     </div>

@@ -1,8 +1,6 @@
-// Modal de Autenticação (Login/Registro)
-// PocketBase auth com email/senha
-
+// Modal de Autenticação - Premium Design
 import { useState } from 'react';
-import { X, Mail, Lock, User, Loader2 } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2, Shield } from 'lucide-react';
 
 interface Props {
   isOpen: boolean;
@@ -33,7 +31,6 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }: Props) {
         await onRegister(email, password, name);
       }
       onClose();
-      // Reset form
       setEmail('');
       setPassword('');
       setName('');
@@ -51,77 +48,71 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl">
+      <div className="relative w-full max-w-md glass-card overflow-hidden animate-fade-in">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between p-5 border-b border-white/[0.06]">
+          <h2 className="text-lg font-bold text-white tracking-tight">
             {mode === 'login' ? 'Entrar' : 'Criar Conta'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 rounded-lg hover:bg-white/[0.05] transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-slate-400" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20">
+              <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
 
           {mode === 'register' && (
-            <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Nome
-              </label>
+            <div className="space-y-2">
+              <label className="block text-sm text-slate-400">Nome</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Seu nome"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                  className="input-premium pl-11"
                 />
               </div>
             </div>
           )}
 
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Email
-            </label>
+          <div className="space-y-2">
+            <label className="block text-sm text-slate-400">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 required
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                className="input-premium pl-11"
               />
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Senha
-            </label>
+          <div className="space-y-2">
+            <label className="block text-sm text-slate-400">Senha</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="password"
                 value={password}
@@ -129,7 +120,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }: Props) {
                 placeholder="********"
                 required
                 minLength={8}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500"
+                className="input-premium pl-11"
               />
             </div>
           </div>
@@ -137,7 +128,7 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }: Props) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-2 px-4 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full btn-primary flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>
@@ -153,39 +144,38 @@ export function AuthModal({ isOpen, onClose, onLogin, onRegister }: Props) {
         </form>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 text-center">
-          {mode === 'login' ? (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Não tem conta?{' '}
-              <button
-                type="button"
-                onClick={() => setMode('register')}
-                className="text-primary-600 hover:text-primary-700 font-medium"
-              >
-                Criar conta
-              </button>
-            </p>
-          ) : (
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Já tem conta?{' '}
-              <button
-                type="button"
-                onClick={() => setMode('login')}
-                className="text-primary-600 hover:text-primary-700 font-medium"
-              >
-                Entrar
-              </button>
-            </p>
-          )}
-        </div>
-
-        {/* Info PocketBase */}
-        <div className="px-4 pb-4">
-          <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
-            Dados salvos de forma privada via PocketBase self-hosted.
-            <br />
-            Sem rastreadores ou cookies de terceiros.
+        <div className="p-5 border-t border-white/[0.06]">
+          <p className="text-sm text-slate-400 text-center">
+            {mode === 'login' ? (
+              <>
+                Não tem conta?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMode('register')}
+                  className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
+                >
+                  Criar conta
+                </button>
+              </>
+            ) : (
+              <>
+                Já tem conta?{' '}
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
+                >
+                  Entrar
+                </button>
+              </>
+            )}
           </p>
+
+          {/* Privacy note */}
+          <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-slate-600">
+            <Shield className="w-3 h-3" />
+            <span>Dados privados via PocketBase. Sem trackers.</span>
+          </div>
         </div>
       </div>
     </div>

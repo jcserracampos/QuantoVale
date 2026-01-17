@@ -1,9 +1,9 @@
-// App Principal - Calculadora de Valuation SaaS/Startups
-// Suporte completo: Rodadas, Berkus, Scorecard, DCF, Múltiplos, PDF
+// App Principal - Calculadora de Valuation Premium
+// Modern Fintech Design with Glass Morphism
 
 import { useState } from 'react';
 import { Toaster, toast } from 'sonner';
-import { Save, Loader2, Github, Info } from 'lucide-react';
+import { Save, Loader2, FileText } from 'lucide-react';
 
 import { Navbar } from '@/components/Navbar';
 import { ValuationForm } from '@/components/ValuationForm';
@@ -63,207 +63,196 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      {/* Toast notifications */}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          className: 'dark:bg-gray-800 dark:text-white',
-        }}
-      />
+    <div className="min-h-screen bg-slate-950">
+      {/* Background gradient effect */}
+      <div className="fixed inset-0 bg-gradient-radial from-slate-900 via-slate-950 to-slate-950 pointer-events-none" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
 
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onLogin={async (email, password) => {
-          await handleLogin(email, password);
-          toast.success('Login realizado!');
-        }}
-        onRegister={async (email, password, name) => {
-          await handleRegister(email, password, name);
-          toast.success('Conta criada com sucesso!');
-        }}
-      />
+      {/* Content */}
+      <div className="relative">
+        {/* Toast notifications */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            className: 'bg-slate-800 text-white border border-white/10',
+            style: {
+              background: 'rgb(30 41 59)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'white',
+            },
+          }}
+        />
 
-      {/* Navbar */}
-      <Navbar
-        isDark={isDark}
-        toggleDark={toggleDark}
-        authState={authState}
-        onLoginClick={() => setShowAuthModal(true)}
-        onLogout={() => {
-          handleLogout();
-          toast.info('Você saiu da sua conta');
-        }}
-      />
+        {/* Auth Modal */}
+        <AuthModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          onLogin={async (email, password) => {
+            await handleLogin(email, password);
+            toast.success('Login realizado!');
+          }}
+          onRegister={async (email, password, name) => {
+            await handleRegister(email, password, name);
+            toast.success('Conta criada com sucesso!');
+          }}
+        />
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Calculadora de Valuation
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Estime o valor da sua startup usando múltiplas metodologias.
-            Suporte completo a <strong>Pre-seed</strong> até <strong>empresas maduras</strong>.
-          </p>
-          <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
-            <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
-              Berkus
-            </span>
-            <span className="text-xs px-2 py-1 bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 rounded-full">
-              Scorecard
-            </span>
-            <span className="text-xs px-2 py-1 bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 rounded-full">
-              DCF
-            </span>
-            <span className="text-xs px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full">
-              Múltiplos
-            </span>
-          </div>
-        </div>
+        {/* Navbar */}
+        <Navbar
+          isDark={isDark}
+          toggleDark={toggleDark}
+          authState={authState}
+          onLoginClick={() => setShowAuthModal(true)}
+          onLogout={() => {
+            handleLogout();
+            toast.info('Você saiu da sua conta');
+          }}
+        />
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Form Column */}
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6">
-              <ValuationForm
-                formData={formData}
-                updateSection={updateSection}
-                resetForm={resetForm}
-                isEarlyStage={isEarlyStage}
-                isLateStage={isLateStage}
-              />
-
-              {/* Ações */}
-              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {/* Botão Salvar */}
-                  <button
-                    onClick={onSave}
-                    disabled={isSaving}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-primary-600 hover:bg-primary-700 disabled:bg-primary-400 text-white font-medium rounded-lg transition-colors"
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        Salvando...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-5 h-5" />
-                        Salvar Análise
-                        {!authState.isAuthenticated && (
-                          <span className="text-xs opacity-75">(login)</span>
-                        )}
-                      </>
-                    )}
-                  </button>
-
-                  {/* Botão PDF */}
-                  <PDFReportButton
-                    formData={formData}
-                    results={results}
-                    valorPonderado={valorPonderado}
-                    valorMedio={valorMedio}
-                    range={range}
-                    metodologiaRecomendada={metodologiaRecomendada}
-                    postMoney={postMoney}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Análises Salvas (só aparece se logado e tiver histórico) */}
-            {authState.isAuthenticated && (
-              <SavedValuations
-                savedValuations={savedValuations}
-                isLoading={isLoadingSaved}
-                onLoad={(valuation) => {
-                  handleLoadValuation(valuation);
-                  toast.success('Análise carregada!');
-                }}
-                onRefresh={handleLoadSaved}
-              />
-            )}
-
-            {/* Info Card */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
-              <div className="flex gap-3">
-                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-800 dark:text-blue-200">
-                  <p className="font-medium mb-2">Métodos por Estágio:</p>
-                  <ul className="space-y-1 text-blue-700 dark:text-blue-300 text-xs">
-                    <li><strong>Pre-seed/Seed:</strong> Berkus + Scorecard (70% peso)</li>
-                    <li><strong>Série A:</strong> Múltiplos ARR + DCF + Scorecard</li>
-                    <li><strong>Série B+:</strong> Múltiplos + DCF (45% peso DCF)</li>
-                    <li><strong>Maduro:</strong> EBITDA + DCF + Patrimônio</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Results Column */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6">
-            <Results
-              results={results}
-              valorMedio={valorMedio}
-              valorMediano={valorMediano}
-              valorPonderado={valorPonderado}
-              range={range}
-              metodologiaRecomendada={metodologiaRecomendada}
-              postMoney={postMoney}
-              isCalculating={isCalculating}
-              estagio={formData.basic.estagio}
-              investimento={formData.rodada.investimento}
-              onExportJSON={handleExportJSON}
-              onExportCSV={handleExportCSV}
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <footer className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <p>
-              Calculadora de Valuation para Startups e SaaS brasileiras.
-              <br className="md:hidden" />
-              Dados sem trackers, privacidade garantida.
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
+              Calcule o{' '}
+              <span className="text-gradient">Valuation</span>
+              {' '}da sua Startup
+            </h1>
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Análise profissional usando múltiplas metodologias.
+              De <span className="text-slate-300 font-medium">Pre-seed</span> a{' '}
+              <span className="text-slate-300 font-medium">empresas maduras</span>.
             </p>
-            <div className="flex items-center gap-4">
-              <a
-                href="https://github.com/harshith-eth/SaaSValuationCalculator"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                <Github className="w-4 h-4" />
-                Referência
-              </a>
-              <a
-                href="https://portaldovaluation.com.br/valuation/multiplo-de-ebitda-por-setor/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                Portal do Valuation
-              </a>
-              <a
-                href="https://negociosbrasil.com.br/vender-uma-empresa-saas-mrr-churn-controlado/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-              >
-                Negócios Brasil
-              </a>
+            <div className="mt-6 flex items-center justify-center gap-2 flex-wrap">
+              {['Berkus', 'Scorecard', 'DCF', 'Múltiplos'].map((method) => (
+                <span
+                  key={method}
+                  className="text-xs font-medium px-3 py-1.5 rounded-full bg-white/[0.05] text-slate-400 border border-white/[0.08]"
+                >
+                  {method}
+                </span>
+              ))}
             </div>
           </div>
-        </footer>
-      </main>
+
+          {/* Two Column Layout */}
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            {/* Form Column */}
+            <div className="xl:col-span-5 space-y-6">
+              <div className="glass-card p-6">
+                <ValuationForm
+                  formData={formData}
+                  updateSection={updateSection}
+                  resetForm={resetForm}
+                  isEarlyStage={isEarlyStage}
+                  isLateStage={isLateStage}
+                />
+
+                {/* Actions */}
+                <div className="mt-8 pt-6 border-t border-white/[0.06]">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Save Button */}
+                    <button
+                      onClick={onSave}
+                      disabled={isSaving}
+                      className="flex-1 btn-primary flex items-center justify-center gap-2"
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-5 h-5" />
+                          Salvar Análise
+                          {!authState.isAuthenticated && (
+                            <span className="text-xs opacity-70">(login)</span>
+                          )}
+                        </>
+                      )}
+                    </button>
+
+                    {/* PDF Button */}
+                    <PDFReportButton
+                      formData={formData}
+                      results={results}
+                      valorPonderado={valorPonderado}
+                      valorMedio={valorMedio}
+                      range={range}
+                      metodologiaRecomendada={metodologiaRecomendada}
+                      postMoney={postMoney}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Saved Valuations */}
+              {authState.isAuthenticated && (
+                <SavedValuations
+                  savedValuations={savedValuations}
+                  isLoading={isLoadingSaved}
+                  onLoad={(valuation) => {
+                    handleLoadValuation(valuation);
+                    toast.success('Análise carregada!');
+                  }}
+                  onRefresh={handleLoadSaved}
+                />
+              )}
+            </div>
+
+            {/* Results Column - The Hero */}
+            <div className="xl:col-span-7">
+              <div className="glass-card p-6 sm:p-8 shadow-2xl">
+                <Results
+                  results={results}
+                  valorMedio={valorMedio}
+                  valorMediano={valorMediano}
+                  valorPonderado={valorPonderado}
+                  range={range}
+                  metodologiaRecomendada={metodologiaRecomendada}
+                  postMoney={postMoney}
+                  isCalculating={isCalculating}
+                  estagio={formData.basic.estagio}
+                  investimento={formData.rodada.investimento}
+                  onExportJSON={handleExportJSON}
+                  onExportCSV={handleExportCSV}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <footer className="mt-16 pt-8 border-t border-white/[0.06]">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+              <p>
+                Calculadora de Valuation para Startups e SaaS brasileiras.
+                <span className="hidden md:inline"> • </span>
+                <br className="md:hidden" />
+                <span className="text-slate-600">Privacidade garantida, sem trackers.</span>
+              </p>
+              <div className="flex items-center gap-6">
+                <a
+                  href="https://github.com/harshith-eth/SaaSValuationCalculator"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-slate-300 transition-colors"
+                >
+                  GitHub
+                </a>
+                <a
+                  href="https://portaldovaluation.com.br/valuation/multiplo-de-ebitda-por-setor/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-slate-300 transition-colors"
+                >
+                  Portal do Valuation
+                </a>
+              </div>
+            </div>
+          </footer>
+        </main>
+      </div>
     </div>
   );
 }

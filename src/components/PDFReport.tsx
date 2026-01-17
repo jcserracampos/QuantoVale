@@ -369,17 +369,17 @@ export function PDFReportButton(props: PDFReportProps) {
     <button
       onClick={handleGenerate}
       disabled={isGenerating}
-      className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-medium rounded-lg transition-colors"
+      className="btn-secondary flex items-center justify-center gap-2"
     >
       {isGenerating ? (
         <>
           <Loader2 className="w-4 h-4 animate-spin" />
-          Gerando PDF...
+          Gerando...
         </>
       ) : (
         <>
           <FileText className="w-4 h-4" />
-          Gerar PDF
+          PDF
         </>
       )}
     </button>

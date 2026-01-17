@@ -1,5 +1,5 @@
-// Navbar com toggle dark mode e auth
-import { Moon, Sun, LogIn, LogOut, User, Calculator } from 'lucide-react';
+// Navbar Premium - Modern Fintech Style
+import { Moon, Sun, LogIn, LogOut, User, TrendingUp } from 'lucide-react';
 import type { AuthState } from '@/types/valuation';
 
 interface Props {
@@ -18,45 +18,52 @@ export function Navbar({
   onLogout,
 }: Props) {
   return (
-    <nav className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-xl border-b border-white/[0.06]">
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center gap-2">
-          <Calculator className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-          <span className="font-bold text-lg text-gray-900 dark:text-white">
-            Valuation
-            <span className="text-primary-600 dark:text-primary-400">Calc</span>
-          </span>
-          <span className="hidden sm:inline text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded-full">
-            SaaS BR
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-glow">
+            <TrendingUp className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <span className="font-bold text-lg tracking-tight text-white">
+              Valuation<span className="text-primary-400">Calc</span>
+            </span>
+            <span className="hidden sm:inline-block ml-2 text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-400 border border-primary-500/20">
+              Pro
+            </span>
+          </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Dark mode toggle */}
           <button
             onClick={toggleDark}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/10 transition-all duration-200"
             title={isDark ? 'Modo claro' : 'Modo escuro'}
           >
             {isDark ? (
-              <Sun className="w-5 h-5 text-yellow-500" />
+              <Sun className="w-4 h-4 text-amber-400" />
             ) : (
-              <Moon className="w-5 h-5 text-gray-600" />
+              <Moon className="w-4 h-4 text-slate-400" />
             )}
           </button>
 
           {/* Auth */}
           {authState.isAuthenticated ? (
-            <div className="flex items-center gap-2">
-              <div className="hidden sm:flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-                <User className="w-4 h-4" />
-                <span>{authState.user?.name || authState.user?.email}</span>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center">
+                  <User className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm text-slate-300 max-w-[120px] truncate">
+                  {authState.user?.name || authState.user?.email}
+                </span>
               </div>
               <button
                 onClick={onLogout}
-                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-400 hover:text-white bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-white/10 rounded-xl transition-all duration-200"
                 title="Sair"
               >
                 <LogOut className="w-4 h-4" />
@@ -66,7 +73,7 @@ export function Navbar({
           ) : (
             <button
               onClick={onLoginClick}
-              className="flex items-center gap-1 px-3 py-1.5 text-sm bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 rounded-xl shadow-lg shadow-primary-500/20 hover:shadow-primary-500/30 transition-all duration-200"
             >
               <LogIn className="w-4 h-4" />
               <span>Entrar</span>
