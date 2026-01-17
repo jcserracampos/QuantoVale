@@ -3,7 +3,6 @@
 
 import {
   ChevronDown,
-  ChevronUp,
   Building2,
   DollarSign,
   TrendingUp,

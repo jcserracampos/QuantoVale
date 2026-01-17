@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Toaster, toast } from 'sonner';
-import { Save, Loader2, FileText } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 
 import { Navbar } from '@/components/Navbar';
 import { ValuationForm } from '@/components/ValuationForm';
