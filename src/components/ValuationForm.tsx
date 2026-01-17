@@ -134,10 +134,10 @@ function Input({
           step={step}
           className={`
             input-premium tabular-nums
-            ${prefix ? 'pl-12' : ''}
             ${suffix ? 'pr-12' : ''}
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
           `}
+          style={{ paddingLeft: prefix ? '3rem' : undefined }}
         />
         {suffix && (
           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
