@@ -1,15 +1,75 @@
 // Fórmulas de Valuation para Startups/SaaS
-// Baseado em metodologias: DCF, Múltiplos de Mercado e Berkus
+// Suporte completo: DCF, Múltiplos, Berkus, Scorecard, Patrimônio
+// Ajustes automáticos por estágio/rodada
 
 import type {
   Setor,
+  Estagio,
   MultiploSetor,
+  MultiploEstagio,
   ValuationFormData,
   ValuationResult,
+  MetodoValuation,
+} from '@/types/valuation';
+import {
+  EXCHANGE_RATE_USD_BRL,
+  BERKUS_MAX_POR_FATOR,
+  SCORECARD_MEDIA_SETOR,
 } from '@/types/valuation';
 
+// Taxa de câmbio USD/BRL
+const USD_BRL = EXCHANGE_RATE_USD_BRL;
+
+// ============================================
+// CONFIGURAÇÕES POR ESTÁGIO/RODADA
+// ============================================
+
+export const MULTIPLOS_ESTAGIO: Record<Estagio, MultiploEstagio> = {
+  'Pre-seed': {
+    arrMin: 0,      // N/A - usa qualitativos
+    arrMax: 0,
+    waccDefault: 30,
+    metodosPreferidos: ['Berkus', 'Scorecard'],
+    pesoQualitativo: 0.7,  // 70% peso qualitativos
+    pesoDCF: 0.1,
+  },
+  'Seed': {
+    arrMin: 4,
+    arrMax: 6,
+    waccDefault: 25,
+    metodosPreferidos: ['Berkus', 'Scorecard', 'Múltiplos ARR'],
+    pesoQualitativo: 0.6,
+    pesoDCF: 0.15,
+  },
+  'Serie-A': {
+    arrMin: 6,
+    arrMax: 9,
+    waccDefault: 18,
+    metodosPreferidos: ['Múltiplos ARR', 'DCF', 'Scorecard'],
+    pesoQualitativo: 0.3,
+    pesoDCF: 0.35,
+  },
+  'Serie-B+': {
+    arrMin: 8,
+    arrMax: 12,
+    waccDefault: 15,
+    metodosPreferidos: ['Múltiplos ARR', 'Múltiplos EBITDA', 'DCF'],
+    pesoQualitativo: 0.15,
+    pesoDCF: 0.45,
+  },
+  'Maduro': {
+    arrMin: 10,
+    arrMax: 15,
+    ebitdaMin: 10,
+    ebitdaMax: 15,
+    waccDefault: 12,
+    metodosPreferidos: ['Múltiplos EBITDA', 'DCF', 'Múltiplos ARR', 'Patrimônio Líquido'],
+    pesoQualitativo: 0.05,
+    pesoDCF: 0.5,
+  },
+};
+
 // Múltiplos de ARR por setor - Dados Brasil 2026
-// Fonte: portaldovaluation.com.br e pesquisas de mercado
 export const MULTIPLOS_SETOR: Record<Setor, MultiploSetor> = {
   'SaaS/Tech': { min: 7, max: 12, avg: 9.5, ebitdaMin: 8, ebitdaMax: 15 },
   'Fintech': { min: 8, max: 15, avg: 11, ebitdaMin: 10, ebitdaMax: 18 },
@@ -22,7 +82,7 @@ export const MULTIPLOS_SETOR: Record<Setor, MultiploSetor> = {
   'Outro': { min: 3, max: 7, avg: 5, ebitdaMin: 5, ebitdaMax: 10 },
 };
 
-// WACC padrão por setor (Brasil, risco-país incluído)
+// WACC padrão por setor (fallback se não definido por estágio)
 export const WACC_PADRAO: Record<Setor, number> = {
   'SaaS/Tech': 18,
   'Fintech': 20,
@@ -35,20 +95,94 @@ export const WACC_PADRAO: Record<Setor, number> = {
   'Outro': 20,
 };
 
-// Taxa de câmbio USD/BRL
-const USD_BRL = 5.15;
+// ============================================
+// FUNÇÕES AUXILIARES
+// ============================================
 
 /**
- * Calcula múltiplo ajustado baseado em crescimento e churn
- * Startups com alto crescimento e baixo churn recebem múltiplos maiores
+ * Retorna WACC padrão baseado no estágio (prioridade) ou setor
+ */
+export function getWACCPadrao(estagio: Estagio, setor: Setor): number {
+  return MULTIPLOS_ESTAGIO[estagio].waccDefault || WACC_PADRAO[setor];
+}
+
+/**
+ * Verifica se método é aplicável ao estágio
+ */
+export function isMetodoAplicavel(metodo: MetodoValuation, estagio: Estagio, data: ValuationFormData): boolean {
+  const { arr, ebitda } = data.financeiro;
+
+  switch (metodo) {
+    case 'Múltiplos ARR':
+      // N/A para Pre-seed, precisa de ARR > 0 para outros
+      return estagio !== 'Pre-seed' && arr > 0;
+
+    case 'Múltiplos EBITDA':
+      // Apenas para Series B+ e Maduro com EBITDA positivo
+      return ['Serie-B+', 'Maduro'].includes(estagio) && ebitda > 0;
+
+    case 'DCF':
+      // Não recomendado para Pre-seed, precisa de dados financeiros
+      return estagio !== 'Pre-seed' && (arr > 0 || ebitda !== 0);
+
+    case 'Berkus':
+      // Ideal para early-stage
+      return ['Pre-seed', 'Seed', 'Serie-A'].includes(estagio);
+
+    case 'Scorecard':
+      // Ideal para early-stage
+      return ['Pre-seed', 'Seed', 'Serie-A'].includes(estagio);
+
+    case 'Patrimônio Líquido':
+      // Apenas para Maduro com dados de ativos/passivos
+      return estagio === 'Maduro' &&
+        (data.financeiro.ativos !== undefined && data.financeiro.ativos > 0);
+
+    default:
+      return false;
+  }
+}
+
+/**
+ * Calcula peso do método na média ponderada baseado no estágio
+ */
+export function getPesoMetodo(metodo: MetodoValuation, estagio: Estagio): number {
+  const config = MULTIPLOS_ESTAGIO[estagio];
+
+  // Métodos qualitativos
+  if (['Berkus', 'Scorecard'].includes(metodo)) {
+    return config.pesoQualitativo / 2; // Dividido entre os dois
+  }
+
+  // DCF
+  if (metodo === 'DCF') {
+    return config.pesoDCF;
+  }
+
+  // Múltiplos e Patrimônio dividem o resto
+  const restante = 1 - config.pesoQualitativo - config.pesoDCF;
+  return restante / 2;
+}
+
+/**
+ * Calcula múltiplo ajustado baseado em crescimento, churn e estágio
  */
 export function calcularMultiploAjustado(
   setor: Setor,
+  estagio: Estagio,
   crescimento3y: number,
   churn: number
 ): number {
-  const multiplos = MULTIPLOS_SETOR[setor];
-  let multiplo = multiplos.avg;
+  const multiploSetor = MULTIPLOS_SETOR[setor];
+  const multiploEstagio = MULTIPLOS_ESTAGIO[estagio];
+
+  // Base: média entre setor e estágio
+  let multiplo = (multiploSetor.avg + (multiploEstagio.arrMin + multiploEstagio.arrMax) / 2) / 2;
+
+  // Se estágio não tem ARR múltiplo, usar só setor
+  if (multiploEstagio.arrMin === 0) {
+    multiplo = multiploSetor.avg;
+  }
 
   // Ajuste por crescimento (cada 10% acima de 20% aumenta 0.5x)
   if (crescimento3y > 20) {
@@ -64,67 +198,97 @@ export function calcularMultiploAjustado(
     multiplo -= (churn - 5) * 0.2;
   }
 
-  // Limitar ao range do setor
-  return Math.max(multiplos.min, Math.min(multiplos.max * 1.2, multiplo));
+  // Limitar ao range combinado
+  const min = Math.min(multiploSetor.min, multiploEstagio.arrMin || multiploSetor.min);
+  const max = Math.max(multiploSetor.max, multiploEstagio.arrMax || multiploSetor.max);
+
+  return Math.max(min, Math.min(max * 1.2, multiplo));
 }
+
+// ============================================
+// MÉTODOS DE VALUATION
+// ============================================
 
 /**
  * Valuation por Múltiplos de ARR
- * Método mais comum para SaaS
  */
 export function calcularMultiplosARR(data: ValuationFormData): ValuationResult {
-  const { setor } = data.basic;
+  const { setor, estagio } = data.basic;
   const { arr } = data.financeiro;
   const { crescimento3y } = data.projecoes;
   const { churn } = data.financeiro;
   const { equipeScore } = data.ajustes;
 
-  const multiplo = calcularMultiploAjustado(setor, crescimento3y, churn);
+  const aplicavel = isMetodoAplicavel('Múltiplos ARR', estagio, data);
+  const peso = aplicavel ? getPesoMetodo('Múltiplos ARR', estagio) : 0;
 
-  // Ajuste pelo score da equipe (0-100)
-  const fatorEquipe = 0.7 + (equipeScore / 100) * 0.6; // Range: 0.7 a 1.3
+  if (!aplicavel || arr <= 0) {
+    return {
+      metodo: 'Múltiplos ARR',
+      valorBRL: 0,
+      valorUSD: 0,
+      confianca: 'Baixa',
+      detalhes: estagio === 'Pre-seed' ? 'N/A para Pre-seed' : 'ARR insuficiente',
+      assuncoes: ['Requer ARR > 0'],
+      aplicavel: false,
+      peso: 0,
+    };
+  }
 
+  const multiplo = calcularMultiploAjustado(setor, estagio, crescimento3y, churn);
+  const fatorEquipe = 0.7 + (equipeScore / 100) * 0.6;
   const valorBRL = arr * multiplo * fatorEquipe;
   const valorUSD = valorBRL / USD_BRL;
 
-  // Determinar confiança baseado em dados disponíveis
   let confianca: 'Alta' | 'Média' | 'Baixa' = 'Média';
-  if (arr > 1000000 && crescimento3y > 30) {
-    confianca = 'Alta';
-  } else if (arr < 500000) {
-    confianca = 'Baixa';
-  }
+  if (arr > 1000000 && crescimento3y > 30) confianca = 'Alta';
+  else if (arr < 500000) confianca = 'Baixa';
 
   return {
     metodo: 'Múltiplos ARR',
     valorBRL,
     valorUSD,
     confianca,
-    detalhes: `Múltiplo aplicado: ${multiplo.toFixed(1)}x | Fator equipe: ${fatorEquipe.toFixed(2)}`,
+    detalhes: `Múltiplo: ${multiplo.toFixed(1)}x | Ajuste equipe: ${fatorEquipe.toFixed(2)}`,
+    assuncoes: [
+      `ARR: R$ ${arr.toLocaleString('pt-BR')}`,
+      `Múltiplo ajustado por crescimento (${crescimento3y}%) e churn (${churn}%)`,
+      `Fator equipe: ${(equipeScore)}%`,
+    ],
+    aplicavel,
+    peso,
   };
 }
 
 /**
  * Valuation por Múltiplos de EBITDA
- * Usado para empresas mais maduras com EBITDA positivo
  */
 export function calcularMultiplosEBITDA(data: ValuationFormData): ValuationResult {
-  const { setor } = data.basic;
+  const { setor, estagio } = data.basic;
   const { ebitda } = data.financeiro;
 
-  const multiplos = MULTIPLOS_SETOR[setor];
-  const multiplo = (multiplos.ebitdaMin! + multiplos.ebitdaMax!) / 2;
+  const aplicavel = isMetodoAplicavel('Múltiplos EBITDA', estagio, data);
+  const peso = aplicavel ? getPesoMetodo('Múltiplos EBITDA', estagio) : 0;
 
-  // EBITDA negativo = método não aplicável
-  if (ebitda <= 0) {
+  if (!aplicavel || ebitda <= 0) {
     return {
       metodo: 'Múltiplos EBITDA',
       valorBRL: 0,
       valorUSD: 0,
       confianca: 'Baixa',
-      detalhes: 'EBITDA negativo - método não aplicável',
+      detalhes: ebitda <= 0 ? 'EBITDA negativo/zero' : 'N/A para este estágio',
+      assuncoes: ['Requer EBITDA positivo', 'Recomendado para Series B+ e Maduro'],
+      aplicavel: false,
+      peso: 0,
     };
   }
+
+  const multiplosSetor = MULTIPLOS_SETOR[setor];
+  const multiplosEstagio = MULTIPLOS_ESTAGIO[estagio];
+
+  const multiplo = multiplosEstagio.ebitdaMin && multiplosEstagio.ebitdaMax
+    ? (multiplosEstagio.ebitdaMin + multiplosEstagio.ebitdaMax) / 2
+    : (multiplosSetor.ebitdaMin! + multiplosSetor.ebitdaMax!) / 2;
 
   const valorBRL = ebitda * multiplo;
   const valorUSD = valorBRL / USD_BRL;
@@ -135,203 +299,365 @@ export function calcularMultiplosEBITDA(data: ValuationFormData): ValuationResul
     valorUSD,
     confianca: 'Alta',
     detalhes: `Múltiplo EBITDA: ${multiplo.toFixed(1)}x`,
+    assuncoes: [
+      `EBITDA: R$ ${ebitda.toLocaleString('pt-BR')}`,
+      `Múltiplo médio do setor ${setor}`,
+      `Estágio: ${estagio}`,
+    ],
+    aplicavel,
+    peso,
   };
 }
 
 /**
  * DCF Simplificado (Discounted Cash Flow)
- * Projeta FCF por 3 anos + valor terminal
  */
 export function calcularDCF(data: ValuationFormData): ValuationResult {
+  const { estagio } = data.basic;
   const { ebitda, arr } = data.financeiro;
   const { crescimento3y, wacc, perpetuo } = data.projecoes;
   const { capexPct } = data.ajustes;
 
-  // Alíquota IR Brasil (simplificada)
+  const aplicavel = isMetodoAplicavel('DCF', estagio, data);
+  const peso = aplicavel ? getPesoMetodo('DCF', estagio) : 0;
+
+  if (!aplicavel) {
+    return {
+      metodo: 'DCF',
+      valorBRL: 0,
+      valorUSD: 0,
+      confianca: 'Baixa',
+      detalhes: 'N/A para Pre-seed (dados insuficientes)',
+      assuncoes: ['Requer projeções financeiras'],
+      aplicavel: false,
+      peso: 0,
+    };
+  }
+
   const aliquotaIR = 0.34;
-
-  // FCF Ano 1 = EBITDA * (1 - IR) - CapEx
   const fcf1 = ebitda * (1 - aliquotaIR) - (arr * capexPct / 100);
+  const fcfBase = fcf1 > 0 ? fcf1 : Math.max(ebitda * 0.1, arr * 0.05);
 
-  // Se FCF negativo, usar projeção otimista
-  const fcfBase = fcf1 > 0 ? fcf1 : ebitda * 0.1;
-
-  // Projetar FCF para anos 2-4
   const taxaCrescimento = crescimento3y / 100;
   const fcf2 = fcfBase * (1 + taxaCrescimento);
   const fcf3 = fcf2 * (1 + taxaCrescimento);
-  const fcf4 = fcf3 * (1 + taxaCrescimento * 0.7); // Desacelera no ano 4
+  const fcf4 = fcf3 * (1 + taxaCrescimento * 0.7);
 
-  // Valor Terminal (Gordon Growth)
   const waccDecimal = wacc / 100;
   const perpetuoDecimal = perpetuo / 100;
-
-  // Evitar divisão por zero ou negativo
   const denominador = waccDecimal - perpetuoDecimal;
+
   if (denominador <= 0.01) {
     return {
       metodo: 'DCF',
       valorBRL: 0,
       valorUSD: 0,
       confianca: 'Baixa',
-      detalhes: 'WACC deve ser maior que taxa perpétua',
+      detalhes: 'WACC deve ser > taxa perpétua',
+      assuncoes: ['Erro: WACC ≤ taxa perpétua'],
+      aplicavel: false,
+      peso: 0,
     };
   }
 
   const valorTerminal = fcf4 * (1 + perpetuoDecimal) / denominador;
-
-  // Valor Presente de cada fluxo
   const pv1 = fcfBase / Math.pow(1 + waccDecimal, 1);
   const pv2 = fcf2 / Math.pow(1 + waccDecimal, 2);
   const pv3 = fcf3 / Math.pow(1 + waccDecimal, 3);
   const pvTerminal = valorTerminal / Math.pow(1 + waccDecimal, 3);
 
-  const valorBRL = pv1 + pv2 + pv3 + pvTerminal;
+  const valorBRL = Math.max(0, pv1 + pv2 + pv3 + pvTerminal);
   const valorUSD = valorBRL / USD_BRL;
 
   return {
     metodo: 'DCF',
-    valorBRL: Math.max(0, valorBRL),
-    valorUSD: Math.max(0, valorUSD),
+    valorBRL,
+    valorUSD,
     confianca: fcf1 > 0 ? 'Média' : 'Baixa',
-    detalhes: `WACC: ${wacc}% | Perpétuo: ${perpetuo}% | TV: R$ ${(valorTerminal/1000000).toFixed(1)}M`,
+    detalhes: `WACC: ${wacc}% | Perpétuo: ${perpetuo}% | TV: R$ ${(valorTerminal/1e6).toFixed(1)}M`,
+    assuncoes: [
+      `FCF Ano 1: R$ ${fcfBase.toLocaleString('pt-BR')}`,
+      `Crescimento projetado: ${crescimento3y}% a.a.`,
+      `WACC: ${wacc}% (${estagio})`,
+      `Taxa perpétua: ${perpetuo}%`,
+      `IR: 34%`,
+    ],
+    aplicavel,
+    peso,
   };
 }
 
 /**
- * Método Berkus
- * Para startups early-stage, max USD 2.5M por fator (5 fatores)
- * Valor máximo total: USD 12.5M (pré-revenue) ou USD 20M (com tração)
+ * Método Berkus (para early-stage)
+ * 5 fatores, max USD 500k cada = USD 2.5M total
  */
 export function calcularBerkus(data: ValuationFormData): ValuationResult {
   const { estagio } = data.basic;
-  const { equipeScore, ltvCac } = data.ajustes;
-  const { mrr, clientes } = data.financeiro;
+  const { berkus } = data;
 
-  // Fator máximo por categoria (USD)
-  const maxPorFator = 2500000;
+  const aplicavel = isMetodoAplicavel('Berkus', estagio, data);
+  const peso = aplicavel ? getPesoMetodo('Berkus', estagio) : 0;
 
-  // 1. Ideia Sólida (baseado no setor e potencial)
-  const fatorIdeia = maxPorFator * 0.8;
-
-  // 2. Protótipo/Produto (baseado no estágio)
-  const estagioMultiplo: Record<string, number> = {
-    'Pre-seed': 0.3,
-    'Seed': 0.5,
-    'Early-stage': 0.7,
-    'Growth': 0.9,
-    'Scale-up': 1.0,
-    'Late-stage': 1.0,
-  };
-  const fatorPrototipo = maxPorFator * (estagioMultiplo[estagio] || 0.5);
-
-  // 3. Equipe (baseado no equipeScore)
-  const fatorEquipe = maxPorFator * (equipeScore / 100);
-
-  // 4. Relações Estratégicas (proxy: LTV/CAC)
-  const fatorRelacoes = maxPorFator * Math.min(1, ltvCac / 5);
-
-  // 5. Tração (baseado em MRR e clientes)
-  let fatorTracao = 0;
-  if (mrr > 0) {
-    // Normaliza: MRR de 100k = 100% do fator
-    fatorTracao = maxPorFator * Math.min(1, mrr / 100000);
-    // Bonus por número de clientes
-    if (clientes > 100) {
-      fatorTracao *= 1.2;
-    }
+  if (!aplicavel) {
+    return {
+      metodo: 'Berkus',
+      valorBRL: 0,
+      valorUSD: 0,
+      confianca: 'Baixa',
+      detalhes: 'N/A para estágios avançados',
+      assuncoes: ['Método para Pre-seed, Seed e Série A'],
+      aplicavel: false,
+      peso: 0,
+    };
   }
 
-  const valorUSD = fatorIdeia + fatorPrototipo + fatorEquipe + fatorRelacoes + fatorTracao;
+  // Soma dos fatores Berkus (já em USD)
+  const valorUSD = Math.min(
+    berkus.equipe + berkus.produto + berkus.mercado + berkus.tracao + berkus.ip,
+    BERKUS_MAX_POR_FATOR * 5 // Max 2.5M
+  );
   const valorBRL = valorUSD * USD_BRL;
 
-  // Berkus é mais confiável para early-stage
+  // Confiança baseada no estágio
   let confianca: 'Alta' | 'Média' | 'Baixa' = 'Média';
-  if (estagio === 'Pre-seed' || estagio === 'Seed') {
-    confianca = 'Alta';
-  } else if (estagio === 'Scale-up' || estagio === 'Late-stage') {
-    confianca = 'Baixa';
-  }
+  if (estagio === 'Pre-seed' || estagio === 'Seed') confianca = 'Alta';
+  else if (estagio === 'Serie-A') confianca = 'Média';
 
   return {
     metodo: 'Berkus',
     valorBRL,
     valorUSD,
     confianca,
-    detalhes: `Ideia: $${(fatorIdeia/1e6).toFixed(1)}M | Produto: $${(fatorPrototipo/1e6).toFixed(1)}M | Equipe: $${(fatorEquipe/1e6).toFixed(1)}M`,
+    detalhes: `Equipe: $${(berkus.equipe/1000).toFixed(0)}k | Produto: $${(berkus.produto/1000).toFixed(0)}k | Mercado: $${(berkus.mercado/1000).toFixed(0)}k`,
+    assuncoes: [
+      `Equipe: $${berkus.equipe.toLocaleString('en-US')}`,
+      `Produto/Protótipo: $${berkus.produto.toLocaleString('en-US')}`,
+      `Tamanho Mercado: $${berkus.mercado.toLocaleString('en-US')}`,
+      `Tração: $${berkus.tracao.toLocaleString('en-US')}`,
+      `IP/Barreiras: $${berkus.ip.toLocaleString('en-US')}`,
+      `Max por fator: $500k | Max total: $2.5M`,
+    ],
+    aplicavel,
+    peso,
   };
 }
 
 /**
- * Calcula todos os métodos e retorna análise completa
+ * Método Scorecard (comparativo ao setor)
+ */
+export function calcularScorecard(data: ValuationFormData): ValuationResult {
+  const { setor, estagio } = data.basic;
+  const { scorecard, rodada } = data;
+
+  const aplicavel = isMetodoAplicavel('Scorecard', estagio, data);
+  const peso = aplicavel ? getPesoMetodo('Scorecard', estagio) : 0;
+
+  if (!aplicavel) {
+    return {
+      metodo: 'Scorecard',
+      valorBRL: 0,
+      valorUSD: 0,
+      confianca: 'Baixa',
+      detalhes: 'N/A para estágios avançados',
+      assuncoes: ['Método para Pre-seed, Seed e Série A'],
+      aplicavel: false,
+      peso: 0,
+    };
+  }
+
+  // Média do setor como base
+  const mediaSetorUSD = SCORECARD_MEDIA_SETOR[setor];
+
+  // Pesos para cada fator do Scorecard
+  const pesos = {
+    equipe: 0.30,
+    tamanhoMercado: 0.25,
+    produto: 0.15,
+    competicao: 0.10,
+    marketing: 0.10,
+    investimento: 0.05,
+    outros: 0.05,
+  };
+
+  // Calcular fator de ajuste total
+  const fatorAjuste = 1 + (
+    (scorecard.equipeAjuste / 100) * pesos.equipe +
+    (scorecard.tamanhoMercadoAjuste / 100) * pesos.tamanhoMercado +
+    (scorecard.produtoAjuste / 100) * pesos.produto +
+    (scorecard.competicaoAjuste / 100) * pesos.competicao +
+    (scorecard.marketingAjuste / 100) * pesos.marketing +
+    (scorecard.investimentoAjuste / 100) * pesos.investimento +
+    (scorecard.outrosAjuste / 100) * pesos.outros
+  );
+
+  // Se tem pre-money estimado, usar como base
+  const baseValor = rodada.preMoneyEstimado > 0
+    ? rodada.preMoneyEstimado / USD_BRL
+    : mediaSetorUSD;
+
+  const valorUSD = baseValor * fatorAjuste;
+  const valorBRL = valorUSD * USD_BRL;
+
+  // Confiança
+  let confianca: 'Alta' | 'Média' | 'Baixa' = 'Média';
+  if (estagio === 'Pre-seed' || estagio === 'Seed') confianca = 'Alta';
+
+  return {
+    metodo: 'Scorecard',
+    valorBRL,
+    valorUSD,
+    confianca,
+    detalhes: `Fator ajuste: ${(fatorAjuste * 100).toFixed(0)}% | Base: $${(baseValor/1e6).toFixed(2)}M`,
+    assuncoes: [
+      `Média do setor ${setor}: $${(mediaSetorUSD/1e6).toFixed(2)}M`,
+      `Ajuste Equipe: ${scorecard.equipeAjuste > 0 ? '+' : ''}${scorecard.equipeAjuste}%`,
+      `Ajuste Mercado: ${scorecard.tamanhoMercadoAjuste > 0 ? '+' : ''}${scorecard.tamanhoMercadoAjuste}%`,
+      `Ajuste Produto: ${scorecard.produtoAjuste > 0 ? '+' : ''}${scorecard.produtoAjuste}%`,
+      `Fator total: ${(fatorAjuste).toFixed(2)}x`,
+    ],
+    aplicavel,
+    peso,
+  };
+}
+
+/**
+ * Método Patrimônio Líquido (para empresas maduras)
+ */
+export function calcularPatrimonio(data: ValuationFormData): ValuationResult {
+  const { estagio } = data.basic;
+  const { ativos, passivos } = data.financeiro;
+
+  const aplicavel = isMetodoAplicavel('Patrimônio Líquido', estagio, data);
+  const peso = aplicavel ? getPesoMetodo('Patrimônio Líquido', estagio) : 0;
+
+  if (!aplicavel || !ativos || ativos <= 0) {
+    return {
+      metodo: 'Patrimônio Líquido',
+      valorBRL: 0,
+      valorUSD: 0,
+      confianca: 'Baixa',
+      detalhes: 'N/A (requer dados de ativos/passivos)',
+      assuncoes: ['Método para empresas maduras com balanço'],
+      aplicavel: false,
+      peso: 0,
+    };
+  }
+
+  const patrimonioLiquido = ativos - (passivos || 0);
+  const valorBRL = Math.max(0, patrimonioLiquido);
+  const valorUSD = valorBRL / USD_BRL;
+
+  return {
+    metodo: 'Patrimônio Líquido',
+    valorBRL,
+    valorUSD,
+    confianca: 'Alta',
+    detalhes: `Ativos - Passivos = R$ ${valorBRL.toLocaleString('pt-BR')}`,
+    assuncoes: [
+      `Ativos: R$ ${ativos.toLocaleString('pt-BR')}`,
+      `Passivos: R$ ${(passivos || 0).toLocaleString('pt-BR')}`,
+      `Patrimônio Líquido contábil`,
+    ],
+    aplicavel,
+    peso,
+  };
+}
+
+// ============================================
+// CÁLCULO COMPLETO
+// ============================================
+
+/**
+ * Calcula todos os métodos aplicáveis e retorna análise completa
  */
 export function calcularValuationCompleto(data: ValuationFormData): {
   results: ValuationResult[];
   valorMedio: number;
   valorMediano: number;
+  valorPonderado: number;
   range: { min: number; max: number };
   metodologiaRecomendada: string;
+  postMoney: number;
 } {
+  const { estagio } = data.basic;
+
+  // Calcular todos os métodos
   const results: ValuationResult[] = [
     calcularMultiplosARR(data),
     calcularMultiplosEBITDA(data),
     calcularDCF(data),
     calcularBerkus(data),
+    calcularScorecard(data),
+    calcularPatrimonio(data),
   ];
 
-  // Filtrar resultados válidos (valor > 0)
-  const valoresValidos = results
-    .filter(r => r.valorBRL > 0)
-    .map(r => r.valorBRL);
+  // Filtrar resultados aplicáveis com valor > 0
+  const resultadosValidos = results.filter(r => r.aplicavel && r.valorBRL > 0);
+  const valores = resultadosValidos.map(r => r.valorBRL);
 
-  if (valoresValidos.length === 0) {
+  if (valores.length === 0) {
     return {
       results,
       valorMedio: 0,
       valorMediano: 0,
+      valorPonderado: 0,
       range: { min: 0, max: 0 },
-      metodologiaRecomendada: 'Dados insuficientes para cálculo',
+      metodologiaRecomendada: 'Dados insuficientes',
+      postMoney: data.rodada.investimento,
     };
   }
 
-  // Calcular estatísticas
-  const valorMedio = valoresValidos.reduce((a, b) => a + b, 0) / valoresValidos.length;
+  // Média simples
+  const valorMedio = valores.reduce((a, b) => a + b, 0) / valores.length;
 
-  const sorted = [...valoresValidos].sort((a, b) => a - b);
+  // Mediana
+  const sorted = [...valores].sort((a, b) => a - b);
   const valorMediano = sorted.length % 2 === 0
     ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
     : sorted[Math.floor(sorted.length / 2)];
 
+  // Média ponderada por estágio
+  let somaPesos = 0;
+  let somaValoresPonderados = 0;
+
+  for (const resultado of resultadosValidos) {
+    somaPesos += resultado.peso;
+    somaValoresPonderados += resultado.valorBRL * resultado.peso;
+  }
+
+  const valorPonderado = somaPesos > 0 ? somaValoresPonderados / somaPesos : valorMedio;
+
+  // Range
   const range = {
-    min: Math.min(...valoresValidos),
-    max: Math.max(...valoresValidos),
+    min: Math.min(...valores),
+    max: Math.max(...valores),
   };
 
-  // Recomendar metodologia baseado no estágio
-  let metodologiaRecomendada: string;
-  const { estagio } = data.basic;
-  const { ebitda, arr } = data.financeiro;
+  // Post-money
+  const postMoney = valorPonderado + data.rodada.investimento;
 
-  if (estagio === 'Pre-seed' || estagio === 'Seed') {
-    metodologiaRecomendada = 'Berkus (recomendado para early-stage)';
-  } else if (ebitda > 0 && arr > 5000000) {
-    metodologiaRecomendada = 'Múltiplos EBITDA + DCF (empresa madura)';
-  } else {
-    metodologiaRecomendada = 'Múltiplos ARR (padrão SaaS)';
-  }
+  // Metodologia recomendada
+  const config = MULTIPLOS_ESTAGIO[estagio];
+  const metodosRecomendados = config.metodosPreferidos
+    .filter(m => results.find(r => r.metodo === m && r.aplicavel))
+    .slice(0, 2)
+    .join(' + ');
 
   return {
     results,
     valorMedio,
     valorMediano,
+    valorPonderado,
     range,
-    metodologiaRecomendada,
+    metodologiaRecomendada: metodosRecomendados || 'Análise qualitativa',
+    postMoney,
   };
 }
 
-/**
- * Formata valor em moeda brasileira
- */
+// ============================================
+// FORMATADORES
+// ============================================
+
 export function formatarBRL(valor: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -341,9 +667,6 @@ export function formatarBRL(valor: number): string {
   }).format(valor);
 }
 
-/**
- * Formata valor em dólar
- */
 export function formatarUSD(valor: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -353,18 +676,16 @@ export function formatarUSD(valor: number): string {
   }).format(valor);
 }
 
-/**
- * Formata número grande (milhões/bilhões)
- */
 export function formatarNumeroGrande(valor: number): string {
-  if (valor >= 1e9) {
-    return `R$ ${(valor / 1e9).toFixed(2)}B`;
-  }
-  if (valor >= 1e6) {
-    return `R$ ${(valor / 1e6).toFixed(2)}M`;
-  }
-  if (valor >= 1e3) {
-    return `R$ ${(valor / 1e3).toFixed(0)}K`;
-  }
+  if (valor >= 1e9) return `R$ ${(valor / 1e9).toFixed(2)}B`;
+  if (valor >= 1e6) return `R$ ${(valor / 1e6).toFixed(2)}M`;
+  if (valor >= 1e3) return `R$ ${(valor / 1e3).toFixed(0)}K`;
   return formatarBRL(valor);
+}
+
+export function formatarUSDGrande(valor: number): string {
+  if (valor >= 1e9) return `$${(valor / 1e9).toFixed(2)}B`;
+  if (valor >= 1e6) return `$${(valor / 1e6).toFixed(2)}M`;
+  if (valor >= 1e3) return `$${(valor / 1e3).toFixed(0)}K`;
+  return formatarUSD(valor);
 }

@@ -1,15 +1,17 @@
 // Hook principal para cálculos de valuation
-// Gerencia estado do formulário e resultados em tempo real
+// Suporte completo a rodadas, métodos qualitativos e ponderação
 
 import { useState, useEffect, useCallback } from 'react';
 import type {
   ValuationFormData,
   ValuationResult,
   AuthState,
+  Estagio,
 } from '@/types/valuation';
 import {
   calcularValuationCompleto,
-  WACC_PADRAO,
+  getWACCPadrao,
+  MULTIPLOS_ESTAGIO,
 } from '@/utils/formulas';
 import {
   getAuthState,
@@ -22,30 +24,53 @@ import {
   downloadFile,
 } from '@/utils/pocketbase';
 
-// Valores padrão realistas para SaaS BR
+// Valores padrão realistas para SaaS BR (estágio Seed)
 const DEFAULTS: ValuationFormData = {
   basic: {
     name: '',
     setor: 'SaaS/Tech',
-    estagio: 'Growth',
+    estagio: 'Seed',
   },
   financeiro: {
     mrr: 50000,      // R$ 50k MRR
     arr: 600000,     // Computed: mrr * 12
     receitaTTM: 600000,
-    ebitda: 120000,  // 20% margem
-    churn: 3,        // 3% mensal
-    clientes: 150,
+    ebitda: 0,       // Early-stage geralmente sem EBITDA
+    churn: 4,        // 4% mensal (típico Seed)
+    clientes: 80,
+    ativos: 0,
+    passivos: 0,
   },
   projecoes: {
-    crescimento3y: 40, // 40% ao ano
-    wacc: 18,          // WACC padrão SaaS BR
-    perpetuo: 3,       // 3% perpétuo
+    crescimento3y: 60, // 60% ao ano (agressivo Seed)
+    wacc: 25,          // WACC Seed padrão
+    perpetuo: 3,
   },
   ajustes: {
-    capexPct: 5,       // 5% da receita
-    ltvCac: 3,         // LTV/CAC de 3x
-    equipeScore: 70,   // Score médio-alto
+    capexPct: 5,
+    ltvCac: 2.5,       // LTV/CAC típico early-stage
+    equipeScore: 70,
+  },
+  rodada: {
+    preMoneyEstimado: 0,
+    investimento: 0,
+    postMoney: 0,
+  },
+  berkus: {
+    equipe: 300000,    // $300k - equipe boa
+    produto: 250000,   // $250k - MVP funcional
+    mercado: 350000,   // $350k - mercado grande
+    tracao: 250000,    // $250k - alguma tração
+    ip: 100000,        // $100k - pouca IP
+  },
+  scorecard: {
+    equipeAjuste: 10,         // +10% vs média
+    tamanhoMercadoAjuste: 15, // +15%
+    produtoAjuste: 5,         // +5%
+    competicaoAjuste: 0,      // neutro
+    marketingAjuste: -5,      // -5%
+    investimentoAjuste: 0,
+    outrosAjuste: 0,
   },
 };
 
@@ -58,14 +83,21 @@ interface UseValuationReturn {
     updates: Partial<ValuationFormData[K]>
   ) => void;
   resetForm: () => void;
+  setEstagio: (estagio: Estagio) => void;
 
   // Resultados
   results: ValuationResult[];
   valorMedio: number;
   valorMediano: number;
+  valorPonderado: number;
   range: { min: number; max: number };
   metodologiaRecomendada: string;
+  postMoney: number;
   isCalculating: boolean;
+
+  // Helpers
+  isEarlyStage: boolean;
+  isLateStage: boolean;
 
   // Auth
   authState: AuthState;
@@ -89,8 +121,10 @@ export function useValuation(): UseValuationReturn {
   const [results, setResults] = useState<ValuationResult[]>([]);
   const [valorMedio, setValorMedio] = useState(0);
   const [valorMediano, setValorMediano] = useState(0);
+  const [valorPonderado, setValorPonderado] = useState(0);
   const [range, setRange] = useState({ min: 0, max: 0 });
   const [metodologiaRecomendada, setMetodologiaRecomendada] = useState('');
+  const [postMoney, setPostMoney] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
 
   // Estado de autenticação
@@ -99,6 +133,10 @@ export function useValuation(): UseValuationReturn {
   // Estado de salvamento
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Helpers para estágio
+  const isEarlyStage = ['Pre-seed', 'Seed', 'Serie-A'].includes(formData.basic.estagio);
+  const isLateStage = ['Serie-B+', 'Maduro'].includes(formData.basic.estagio);
 
   // Atualiza ARR automaticamente quando MRR muda
   useEffect(() => {
@@ -114,19 +152,40 @@ export function useValuation(): UseValuationReturn {
     }
   }, [formData.financeiro.mrr]);
 
-  // Atualiza WACC padrão quando setor muda
+  // Atualiza Post-Money quando Pre-Money ou Investimento mudam
   useEffect(() => {
-    const waccPadrao = WACC_PADRAO[formData.basic.setor];
-    if (waccPadrao && formData.projecoes.wacc !== waccPadrao) {
+    const newPostMoney = formData.rodada.preMoneyEstimado + formData.rodada.investimento;
+    if (formData.rodada.postMoney !== newPostMoney) {
       setFormData(prev => ({
         ...prev,
-        projecoes: {
-          ...prev.projecoes,
-          wacc: waccPadrao,
+        rodada: {
+          ...prev.rodada,
+          postMoney: newPostMoney,
         },
       }));
     }
-  }, [formData.basic.setor]);
+  }, [formData.rodada.preMoneyEstimado, formData.rodada.investimento]);
+
+  // Atualiza WACC padrão quando estágio muda
+  useEffect(() => {
+    const waccPadrao = getWACCPadrao(formData.basic.estagio, formData.basic.setor);
+    // Só atualiza se WACC atual for o padrão do estágio anterior
+    // para não sobrescrever valores customizados
+    const estagioAnterior = MULTIPLOS_ESTAGIO[formData.basic.estagio];
+    if (estagioAnterior && formData.projecoes.wacc !== waccPadrao) {
+      // Verifica se está usando um valor padrão de algum estágio
+      const valoresPadrao = Object.values(MULTIPLOS_ESTAGIO).map(e => e.waccDefault);
+      if (valoresPadrao.includes(formData.projecoes.wacc)) {
+        setFormData(prev => ({
+          ...prev,
+          projecoes: {
+            ...prev.projecoes,
+            wacc: waccPadrao,
+          },
+        }));
+      }
+    }
+  }, [formData.basic.estagio, formData.basic.setor]);
 
   // Calcular valuation quando dados mudam
   useEffect(() => {
@@ -138,8 +197,10 @@ export function useValuation(): UseValuationReturn {
       setResults(analysis.results);
       setValorMedio(analysis.valorMedio);
       setValorMediano(analysis.valorMediano);
+      setValorPonderado(analysis.valorPonderado);
       setRange(analysis.range);
       setMetodologiaRecomendada(analysis.metodologiaRecomendada);
+      setPostMoney(analysis.postMoney);
       setIsCalculating(false);
     }, 300);
 
@@ -171,6 +232,24 @@ export function useValuation(): UseValuationReturn {
   // Resetar formulário
   const resetForm = useCallback(() => {
     setFormData(DEFAULTS);
+  }, []);
+
+  // Mudar estágio (com ajustes automáticos)
+  const setEstagio = useCallback((estagio: Estagio) => {
+    setFormData(prev => {
+      const config = MULTIPLOS_ESTAGIO[estagio];
+      return {
+        ...prev,
+        basic: {
+          ...prev.basic,
+          estagio,
+        },
+        projecoes: {
+          ...prev.projecoes,
+          wacc: config.waccDefault,
+        },
+      };
+    });
   }, []);
 
   // Auth handlers
@@ -231,12 +310,17 @@ export function useValuation(): UseValuationReturn {
     updateFormData,
     updateSection,
     resetForm,
+    setEstagio,
     results,
     valorMedio,
     valorMediano,
+    valorPonderado,
     range,
     metodologiaRecomendada,
+    postMoney,
     isCalculating,
+    isEarlyStage,
+    isLateStage,
     authState,
     handleLogin,
     handleRegister,
@@ -268,7 +352,7 @@ export function useAccordion(initialOpen: string[] = []) {
   const isOpen = useCallback((section: string) => openSections.has(section), [openSections]);
 
   const openAll = useCallback(() => {
-    setOpenSections(new Set(['basic', 'financeiro', 'projecoes', 'ajustes']));
+    setOpenSections(new Set(['basic', 'financeiro', 'projecoes', 'ajustes', 'rodada', 'berkus', 'scorecard']));
   }, []);
 
   const closeAll = useCallback(() => {
