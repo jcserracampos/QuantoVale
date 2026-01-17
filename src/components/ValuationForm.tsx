@@ -551,7 +551,7 @@ export function ValuationForm({ formData, updateSection, resetForm, isEarlyStage
             value={formData.projecoes.crescimento3y}
             onChange={(v) => updateSection('projecoes', { crescimento3y: v })}
             min={-20}
-            max={100}
+            max={1000}
             suffix="%"
           />
           <Slider
