@@ -72,7 +72,9 @@ export function SavedValuations({ savedValuations, isLoading, onLoad, onRefresh 
           ) : (
             <ul className="divide-y divide-gray-100 dark:divide-gray-700">
               {savedValuations.map((valuation) => {
-                const inputs = JSON.parse(valuation.inputs);
+                const inputs = typeof valuation.inputs === 'string'
+                  ? JSON.parse(valuation.inputs)
+                  : valuation.inputs;
                 const created = valuation.created
                   ? new Date(valuation.created).toLocaleDateString('pt-BR', {
                       day: '2-digit',

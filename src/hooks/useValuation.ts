@@ -339,7 +339,9 @@ export function useValuation(): UseValuationReturn {
   // Carregar uma valuation específica no formulário
   const handleLoadValuation = useCallback((valuation: PocketBaseValuation) => {
     try {
-      const inputs = JSON.parse(valuation.inputs) as ValuationFormData;
+      const inputs = typeof valuation.inputs === 'string'
+        ? JSON.parse(valuation.inputs) as ValuationFormData
+        : valuation.inputs as unknown as ValuationFormData;
       setFormData(inputs);
     } catch (error) {
       console.error('Erro ao carregar valuation:', error);
