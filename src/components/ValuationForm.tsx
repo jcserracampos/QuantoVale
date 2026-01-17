@@ -117,7 +117,7 @@ function Input({
       <label className="block text-sm text-slate-400 mb-2">{label}</label>
       <div className="relative">
         {prefix && (
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm pointer-events-none select-none">
             {prefix}
           </span>
         )}
@@ -134,7 +134,7 @@ function Input({
           step={step}
           className={`
             input-premium tabular-nums
-            ${prefix ? 'pl-10' : ''}
+            ${prefix ? 'pl-12' : ''}
             ${suffix ? 'pr-12' : ''}
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
           `}
