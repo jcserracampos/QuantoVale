@@ -9,11 +9,9 @@ import type {
   AuthState
 } from '@/types/valuation';
 
-// Instância do PocketBase usando proxy do Vite
-// Em produção, configure a URL do seu PocketBase
-const pbUrl = import.meta.env.PROD
-  ? (import.meta.env.VITE_POCKETBASE_URL || 'https://seu-pocketbase.com')
-  : '/pb';
+// Instância do PocketBase
+// Usa VITE_POCKETBASE_URL se definida, senão usa proxy /pb em dev
+const pbUrl = import.meta.env.VITE_POCKETBASE_URL || '/pb';
 
 export const pb = new PocketBase(pbUrl);
 
