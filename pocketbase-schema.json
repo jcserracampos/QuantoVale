@@ -1,0 +1,45 @@
+{
+  "collections": [
+    {
+      "name": "valuations",
+      "type": "base",
+      "schema": [
+        {
+          "name": "userId",
+          "type": "relation",
+          "required": true,
+          "options": {
+            "collectionId": "_pb_users_auth_",
+            "cascadeDelete": true,
+            "maxSelect": 1,
+            "displayFields": ["email"]
+          }
+        },
+        {
+          "name": "inputs",
+          "type": "json",
+          "required": true,
+          "options": {}
+        },
+        {
+          "name": "results",
+          "type": "json",
+          "required": true,
+          "options": {}
+        }
+      ],
+      "listRule": "@request.auth.id != '' && userId = @request.auth.id",
+      "viewRule": "@request.auth.id != '' && userId = @request.auth.id",
+      "createRule": "@request.auth.id != ''",
+      "updateRule": "@request.auth.id != '' && userId = @request.auth.id",
+      "deleteRule": "@request.auth.id != '' && userId = @request.auth.id"
+    }
+  ],
+  "instructions": [
+    "1. Baixe o PocketBase: https://pocketbase.io/docs/",
+    "2. Execute: ./pocketbase serve",
+    "3. Acesse: http://localhost:8090/_/",
+    "4. Crie um admin e importe este schema",
+    "5. A coleção 'users' já existe por padrão (auth)"
+  ]
+}
