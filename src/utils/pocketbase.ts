@@ -100,7 +100,7 @@ export async function salvarValuation(
   }
 
   const data = {
-    userId: authState.user!.id,
+    user: authState.user!.id,
     inputs: JSON.stringify(inputs),
     results: JSON.stringify(results),
   };
@@ -126,7 +126,7 @@ export async function listarValuations(): Promise<PocketBaseValuation[]> {
 
   try {
     const records = await pb.collection('valuations').getList(1, 50, {
-      filter: `userId = "${authState.user!.id}"`,
+      filter: `user = "${authState.user!.id}"`,
       sort: '-created',
     });
 
@@ -203,14 +203,14 @@ export function downloadFile(content: string, filename: string, type: string): v
 export const POCKETBASE_SCHEMA = `
 // Coleção: valuations
 // Campos:
-// - userId (relation -> users)
+// - user (relation -> users)
 // - inputs (json)
 // - results (json)
 //
 // API Rules:
-// List: @request.auth.id != "" && userId = @request.auth.id
-// View: @request.auth.id != "" && userId = @request.auth.id
+// List: @request.auth.id != "" && user = @request.auth.id
+// View: @request.auth.id != "" && user = @request.auth.id
 // Create: @request.auth.id != ""
-// Update: @request.auth.id != "" && userId = @request.auth.id
-// Delete: @request.auth.id != "" && userId = @request.auth.id
+// Update: @request.auth.id != "" && user = @request.auth.id
+// Delete: @request.auth.id != "" && user = @request.auth.id
 `;

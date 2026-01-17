@@ -10,6 +10,7 @@ import { ValuationForm } from '@/components/ValuationForm';
 import { Results } from '@/components/Results';
 import { AuthModal } from '@/components/AuthModal';
 import { PDFReportButton } from '@/components/PDFReport';
+import { SavedValuations } from '@/components/SavedValuations';
 import { useValuation, useDarkMode } from '@/hooks/useValuation';
 
 function App() {
@@ -39,6 +40,10 @@ function App() {
     handleExportCSV,
     isSaving,
     saveError,
+    savedValuations,
+    isLoadingSaved,
+    handleLoadSaved,
+    handleLoadValuation,
   } = useValuation();
 
   // Salvar com feedback
@@ -171,6 +176,19 @@ function App() {
                 </div>
               </div>
             </div>
+
+            {/* Análises Salvas (só aparece se logado e tiver histórico) */}
+            {authState.isAuthenticated && (
+              <SavedValuations
+                savedValuations={savedValuations}
+                isLoading={isLoadingSaved}
+                onLoad={(valuation) => {
+                  handleLoadValuation(valuation);
+                  toast.success('Análise carregada!');
+                }}
+                onRefresh={handleLoadSaved}
+              />
+            )}
 
             {/* Info Card */}
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">

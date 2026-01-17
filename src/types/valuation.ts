@@ -120,7 +120,7 @@ export interface ValuationResult {
 // Resultado completo da análise
 export interface ValuationAnalysis {
   id?: string;
-  userId?: string;
+  user?: string;
   inputs: ValuationFormData;
   results: ValuationResult[];
   valorMedio: number;
@@ -138,7 +138,7 @@ export interface ValuationAnalysis {
 // Estrutura para salvar no PocketBase
 export interface PocketBaseValuation {
   id?: string;
-  userId: string;
+  user: string;
   inputs: string;    // JSON stringified
   results: string;   // JSON stringified
   estagio: Estagio;

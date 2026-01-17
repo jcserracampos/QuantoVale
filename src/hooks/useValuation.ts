@@ -7,6 +7,7 @@ import type {
   ValuationResult,
   AuthState,
   Estagio,
+  PocketBaseValuation,
 } from '@/types/valuation';
 import {
   calcularValuationCompleto,
@@ -19,6 +20,7 @@ import {
   register,
   logout,
   salvarValuation,
+  listarValuations,
   exportarJSON,
   exportarCSV,
   downloadFile,
@@ -111,6 +113,12 @@ interface UseValuationReturn {
   handleExportCSV: () => void;
   isSaving: boolean;
   saveError: string | null;
+
+  // Histórico de análises salvas
+  savedValuations: PocketBaseValuation[];
+  isLoadingSaved: boolean;
+  handleLoadSaved: () => Promise<void>;
+  handleLoadValuation: (valuation: PocketBaseValuation) => void;
 }
 
 export function useValuation(): UseValuationReturn {
@@ -133,6 +141,10 @@ export function useValuation(): UseValuationReturn {
   // Estado de salvamento
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Estado de histórico salvo
+  const [savedValuations, setSavedValuations] = useState<PocketBaseValuation[]>([]);
+  const [isLoadingSaved, setIsLoadingSaved] = useState(false);
 
   // Helpers para estágio
   const isEarlyStage = ['Pre-seed', 'Seed', 'Serie-A'].includes(formData.basic.estagio);
@@ -305,6 +317,44 @@ export function useValuation(): UseValuationReturn {
     downloadFile(csv, filename, 'text/csv');
   }, [formData.basic.name, results]);
 
+  // Carregar histórico de valuations salvas
+  const handleLoadSaved = useCallback(async () => {
+    if (!authState.isAuthenticated) {
+      setSavedValuations([]);
+      return;
+    }
+
+    setIsLoadingSaved(true);
+    try {
+      const valuations = await listarValuations();
+      setSavedValuations(valuations);
+    } catch (error) {
+      console.error('Erro ao carregar histórico:', error);
+      setSavedValuations([]);
+    } finally {
+      setIsLoadingSaved(false);
+    }
+  }, [authState.isAuthenticated]);
+
+  // Carregar uma valuation específica no formulário
+  const handleLoadValuation = useCallback((valuation: PocketBaseValuation) => {
+    try {
+      const inputs = JSON.parse(valuation.inputs) as ValuationFormData;
+      setFormData(inputs);
+    } catch (error) {
+      console.error('Erro ao carregar valuation:', error);
+    }
+  }, []);
+
+  // Carregar histórico quando usuário loga
+  useEffect(() => {
+    if (authState.isAuthenticated) {
+      handleLoadSaved();
+    } else {
+      setSavedValuations([]);
+    }
+  }, [authState.isAuthenticated, handleLoadSaved]);
+
   return {
     formData,
     updateFormData,
@@ -330,6 +380,10 @@ export function useValuation(): UseValuationReturn {
     handleExportCSV,
     isSaving,
     saveError,
+    savedValuations,
+    isLoadingSaved,
+    handleLoadSaved,
+    handleLoadValuation,
   };
 }
 
