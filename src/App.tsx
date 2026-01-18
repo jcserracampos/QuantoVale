@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Toaster, toast } from 'sonner';
-import { Save, Loader2 } from 'lucide-react';
+import { Save, Loader2, TrendingUp, DollarSign, Calculator, Star, BarChart3, Scale } from 'lucide-react';
 
 import { Navbar } from '@/components/Navbar';
 import { ValuationForm } from '@/components/ValuationForm';
@@ -218,6 +218,176 @@ function App() {
                   onExportJSON={handleExportJSON}
                   onExportCSV={handleExportCSV}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Methods Section - Excluded from PDF */}
+          <div className="mt-16" data-exclude-from-pdf="true">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-white mb-3">
+                Metodologias de <span className="text-gradient">Valuation</span>
+              </h2>
+              <p className="text-slate-400 max-w-3xl mx-auto">
+                Entenda os métodos que utilizamos para calcular o valor da sua empresa em diferentes estágios de maturidade.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Múltiplos ARR */}
+              <div className="glass-card p-6 hover:bg-white/[0.05] transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-primary-500/10 text-primary-400">
+                    <TrendingUp className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">Múltiplos ARR</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-3">
+                      Método baseado em receita recorrente anual. Multiplica o ARR por um fator que varia de acordo com o setor, crescimento, churn e qualidade da equipe.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Série B+
+                      </span>
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        SaaS
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Múltiplos EBITDA */}
+              <div className="glass-card p-6 hover:bg-white/[0.05] transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-primary-500/10 text-primary-400">
+                    <DollarSign className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">Múltiplos EBITDA</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-3">
+                      Avaliação baseada em lucros operacionais. Multiplica o EBITDA por um múltiplo específico do setor. Ideal para empresas maduras com lucro estável.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Maduro
+                      </span>
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Lucrativo
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* DCF */}
+              <div className="glass-card p-6 hover:bg-white/[0.05] transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-primary-500/10 text-primary-400">
+                    <Calculator className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">DCF (Fluxo de Caixa Descontado)</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-3">
+                      Projeta fluxos de caixa futuros (3 anos) e os traz a valor presente usando uma taxa de desconto ajustada por risco (WACC). Calcula valor terminal.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Série A+
+                      </span>
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Previsível
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Berkus */}
+              <div className="glass-card p-6 hover:bg-white/[0.05] transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-primary-500/10 text-primary-400">
+                    <Star className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">Método Berkus</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-3">
+                      Avalia 5 fatores qualitativos (Equipe, Produto, Mercado, Tração, IP) atribuindo até $500K por fator. Máximo de $2.5M. Ideal para early-stage.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Pre-seed
+                      </span>
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Seed
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Scorecard */}
+              <div className="glass-card p-6 hover:bg-white/[0.05] transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-primary-500/10 text-primary-400">
+                    <BarChart3 className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">Método Scorecard</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-3">
+                      Compara com valuation mediano do setor e ajusta por 6 fatores ponderados: Equipe (30%), Mercado (25%), Produto (15%), Competição (10%), Marketing (10%), Investimento (5%).
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Seed
+                      </span>
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Série A
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Patrimônio Líquido */}
+              <div className="glass-card p-6 hover:bg-white/[0.05] transition-colors">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-xl bg-primary-500/10 text-primary-400">
+                    <Scale className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">Patrimônio Líquido</h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-3">
+                      Método contábil simples baseado em ativos menos passivos. Calcula o valor patrimonial da empresa. Mais adequado para empresas maduras com ativos tangíveis.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Maduro
+                      </span>
+                      <span className="px-2 py-1 rounded bg-white/[0.05] border border-white/[0.08]">
+                        Conservador
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Info Note */}
+            <div className="mt-8 glass-card p-6 border-l-4 border-primary-500">
+              <div className="flex items-start gap-3">
+                <div className="text-primary-400 mt-0.5">
+                  <Calculator className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-white font-semibold mb-1">Cálculo Ponderado por Estágio</h4>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    Nossa calculadora aplica pesos diferentes para cada método de acordo com o estágio da empresa.
+                    Por exemplo, startups em <span className="text-slate-300">Pre-seed</span> têm maior peso em métodos qualitativos (Berkus e Scorecard),
+                    enquanto empresas <span className="text-slate-300">maduras</span> priorizam DCF e Múltiplos EBITDA.
+                    O resultado final apresenta <strong className="text-white">média, mediana e valor ponderado</strong> para dar uma visão completa.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
